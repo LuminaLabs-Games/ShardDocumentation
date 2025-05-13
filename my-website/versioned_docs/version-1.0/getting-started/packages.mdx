@@ -1,0 +1,82 @@
+---
+sidebar_label: "Packages"
+sidebar_position: 3
+---
+
+import ReactPlayer from 'react-player'
+
+# 📦 Packages
+
+Shard supports an official package repository that makes it easy to install and manage reusable modules directly to **Visual Studio Code** using the Shard plugin.
+
+![Packages Repository](/img/packages_repo.png)
+
+---
+
+## 🚀 Installing a Package
+
+If you don't have the Shard plugin installed, you can find it in the [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=WilWilson.shard-framework).
+
+1. Open the command palette via the Shard plugin:  
+   **`Ctrl + Shift + P`** (Windows/Linux) or **`Cmd + Shift + P`** (Mac).
+
+   **`> Shard: Install Package`**
+
+   ![Install Package](/img/install_package.png)
+
+2. Enter the package name (e.g., `DataValidator`, `ShardMath`).
+
+	![Package Name](/img/shard_math.png)
+
+
+3. The plugin will:
+   - Download the package from the repository
+   - Place or update it inside your `Packages` folder
+   - Automatically reflect changes in VS Code
+
+<ReactPlayer controls loop={true} url='/vids/install_package.mp4' />
+
+---
+
+## 🧩 Benefits
+
+- 🔄 **One-command install & update**
+- 🧱 **Modular**: packages are cleanly separated in the `Packages/` folder
+- ✅ **Versioned and maintained**
+- 💼 **Collaboration Friendly**: Anyone can make a pull request to the **[packages repository](https://github.com/LuminaLabs-Games/Shard-Packages)**
+
+---
+
+## 📁 Package Folder Structure
+
+All packages are installed into:
+
+```
+
+src/
+shared/
+Packages/
+your-package-name/
+
+````
+
+> ShardMath example of accesing installed packages and utilizng them:
+
+```lua
+local ShardMath = require(ReplicatedStorage.Packages.ShardMath)
+local shardMath = ShardMath.new(1000000)
+print(shardMath:formatWithSuffix()) -- 1M
+print(shardMath:formatWithFullName()) -- 1 Million
+
+-- // Singleton:
+print(ShardMath.formatNumberWithSuffix(1000000)) -- 1M
+print(ShardMath.formatNumberWithFullName(1000000)) -- 1 Million
+
+-- // With decimal places:
+print(ShardMath.formatNumberWithSuffix(1000000, 2)) -- 1.00M
+
+````
+
+---
+
+[Next: Explore some of the core systems/packages of shard →](../category/core-api-)

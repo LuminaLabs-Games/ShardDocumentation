@@ -1,0 +1,113 @@
+---
+sidebar_label: "Class Snippet"
+sidebar_position: 3
+---
+
+import ReactPlayer from 'react-player'
+
+# Class Snippet
+Easily create classes with the `shard_class` snippet. 
+
+Snippets are a great way to **speed up** your development process by providing a template for common code structures.
+
+This snippet provides a basic structure for creating a class in Shard, including the `new`, `initialize`, and `start` methods.
+
+## 📄 Snippet
+```lua
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Dispatcher = require(ReplicatedStorage.Packages.Dispatcher)
+local GetModule = require(ReplicatedStorage.Packages.GetModule)
+
+local ClassName = {}
+ClassName.__index = ClassName
+
+type self = {
+    new: () -> ClassName,
+    initialize: () -> (),
+    start: () -> ()
+}
+
+export type ClassName = typeof(setmetatable({} :: self, ClassName))
+
+function ClassName.new(): ClassName
+    local self = setmetatable({} :: self, ClassName)
+
+    return self
+end
+
+function ClassName:initialize()
+    
+end
+
+function ClassName:start()
+    
+end
+
+return ClassName
+```
+
+---
+## 🧩 Visual Studio Code Snippet 
+
+You can also bake this snippet into Visual Studio Code so whenever you type `shard_class` and click tab it will automatically fill out, and apply cursors where you would want to name the class. 
+
+We may add this into the Shard extension in the future but for now this is how you can add it:
+
+(You can also follow the **[video demo](#snippet-video-demo)** below)
+
+1. Open Visual Studio Code.
+2. Go to `File` > `Preferences` > `Configure Snippets`.
+3. Select `New Global Snippets file ...` from the list or an existing snippet file you have dedicated for Lua.
+4. Name the snippet `shard-snippets` or any name you prefer.
+5. Replace all the code and paste the following snippet:
+
+```json
+{
+    "ShardClassTemplate": {
+        "prefix": [
+            "shard_class"
+        ],
+        "body": [
+            "local ReplicatedStorage = game:GetService(\"ReplicatedStorage\")\n",
+            "local Dispatcher = require(ReplicatedStorage.Packages.Dispatcher)",
+            "local GetModule = require(ReplicatedStorage.Packages.GetModule)\n",
+            "local ${1:ClassName} = {}",
+            "${1:ClassName}.__index = ${1:ClassName}\n",
+            "type self = {",
+            "\tnew: () -> ${1:ClassName},",
+            "\tinitialize: () -> (),",
+            "\tstart: () -> ()",
+            "}\n",
+            "export type ${1:ClassName} = typeof(setmetatable({} :: self, ${1:ClassName}))\n",
+            "function ${1:ClassName}.new(): ${1:ClassName}",
+            "\tlocal self = setmetatable({} :: self, ${1:ClassName})\n",
+            "\treturn self",
+            "end\n",
+            "function ${1:ClassName}:initialize()",
+            "\t",
+            "end\n",
+            "function ${1:ClassName}:start()",
+            "\t",
+            "end\n",
+            "return ${1:ClassName}"
+        ],
+        "description": "Creates a new shard class template with initialize and start methods."
+    }
+}
+```
+
+6. Save the file.
+7. Now, when you type `shard_class` in a Lua file, it will auto-complete to the class snippet.
+
+---
+
+## 🎥 Snippet Video Demo 
+<ReactPlayer controls url='/vids/snippet_demo.mp4' />
+
+---
+
+Now you can easily create classes in Shard with the `shard_class` snippet!
+
+Next: [Learn how to install packages quickly with the Shard plugin →](packages.mdx)
+

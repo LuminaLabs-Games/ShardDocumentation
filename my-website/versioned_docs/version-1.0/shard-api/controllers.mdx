@@ -1,0 +1,324 @@
+---
+sidebar_label: "Controllers"
+sidebar_position: 3
+---
+
+# 🎮 Controllers
+
+Controllers in Shard are client-side modules responsible for handling:
+
+- UI behavior
+- Input handling
+- Camera and viewport logic
+- Local effects and sounds
+- Client-specific gameplay interactions
+
+
+Shard uses single file architecture ideology therefore controllers are to be made inside the `src/shared/Controllers` folder/file.
+
+Controllers are automatically loaded and parented to the client from the `src/shared/Controllers` file using Shard's module lifecycle system.
+
+The controller bootstrapping process will wait for the server to load before loading the client. This is done to ensure that all server-side dependencies are available before the client starts.
+
+---
+
+Each controller module can implement the following lifecycle methods:
+
+| Method       | Purpose                                               |
+|--------------|--------------------------------------------------------|
+| `new()`      | Optional constructor (inject dependencies if needed)   |
+| `initialize()` | Called after construction, used to set up connections or state |
+| `start()`    | Called after all modules are initialized               |
+
+> Controllers are registered into `GetModule` automatically, so if you need to use `GetModule`, use it in the `start()` method since all modules are guaranteed to be initialized at that point.
+
+<details>
+
+<summary>Controller Bootstrapper Raw Code</summary>
+
+```lua
+while workspace:GetAttribute("ServerLoaded") ~= true do
+    print("Waiting for server to load...")
+    task.wait()
+end
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+
+local Packages = ReplicatedStorage:WaitForChild("Packages")
+
+local Framework = require(ReplicatedStorage.Configs.Framework)
+local ReplicaClient = require(ReplicatedStorage.Libraries.Replica.ReplicaClient)
+local GetModule = require(ReplicatedStorage.Packages.GetModule)
+local Promise = require(Packages:WaitForChild("Promise"))
+local start = tick()
+
+GetModule.Debug = Framework.GET_MODULE_DEBUG
+
+local totalModules = #script:GetChildren()
+local loaded = 0
+local initialized = {}
+
+local function loadModule(module)
+    if Framework.DEV_MODE and RunService:IsStudio() then
+        task.spawn(function()
+            local success, err = pcall(function()
+                local required = require(module)
+
+                if required.new then
+                    required = required.new({}) -- You can pass any arguments you want to the constructor here as DI
+                end
+
+                if required.initialize then
+                    required:initialize()
+                end
+
+                initialized[module.Name] = required
+                GetModule:Add(required, module.Name)
+            end)
+
+            if not success then
+                warn(`🚫 {err}`)
+            end
+
+            loaded += 1
+        end)
+    else
+        local required = require(module)
+
+        if required.new then
+            required = required:new({}) -- You can pass any arguments you want to the constructor here as DI
+        end
+
+        if required.initialize then
+            required:initialize()
+        end
+
+        initialized[module.Name] = required
+        GetModule:Add(required, module.Name)
+    end
+end
+
+Promise.new(function(resolve, reject)
+    for _, module in script:GetChildren() do
+        loadModule(module)
+    end
+
+    if Framework.DEV_MODE and RunService:IsStudio() then
+        while loaded < totalModules do
+            task.wait()
+        end
+    end
+
+    for name, module in initialized do
+        if module.start then
+            module:start()
+        end
+        print(`🚀 Loaded {name}`)
+    end
+
+    resolve()
+end)
+    :andThen(function()
+        print(`✅ Client Loaded Successfully in {tick() - start}s`)
+        ReplicaClient.RequestData()
+    end)
+    :catch(function(err)
+        warn(err)
+    end)
+```
+
+</details>
+
+
+---
+
+## 🧪 Basic Controller Example
+
+### With Object-Oriented Style
+
+```lua
+local MyController = {}
+MyController.__index = MyController
+
+function MyController.new()
+    local self = setmetatable({}, MyController)
+    return self
+end
+
+function MyController:initialize()
+    -- This is called after the module is required
+    print("Initialized MyController")
+end
+
+function MyController:start()
+    -- Any functionality that needs to be run after all modules are loaded
+    print("Started MyController")
+end
+
+return MyController
+```
+
+### With Stateless or Singleton Style
+```lua
+local MyController = {}
+
+function MyController:initialize()
+    print("Initialized MyController")
+end
+
+function MyController:start()
+    print("Started MyController")
+end
+
+return MyController
+```
+
+---
+
+## 🔬 Advanced Controller Example
+In more complex games, a single controller may need to manage many moving parts. A great way to stay organized is by breaking down responsibilities into components, such as separate modules for each UI page or feature. This promotes reusability and separation of concerns.
+
+In this example, we'll create a UIController that loads and manages multiple UI page components. Each page is a standalone module, following the same lifecycle and supporting dependency injection (DI) — such as passing down PlayerGui or shared services.
+
+We'll also introduce type annotations, folder-based module resolution, and inter-controller communication via Dispatcher, showcasing best practices when building scalable systems in Shard.
+
+### UIController
+```lua
+local Players = game:GetService("Players")
+local Player = Players.LocalPlayer
+local PlayerGui = Player:WaitForChild("PlayerGui")
+
+local UIController = {}
+UIController.__index = UIController
+
+type self = {
+    new: () -> UIController,
+    initialize: () -> (),
+    start: () -> ()
+}
+
+export type UIController = typeof(setmetatable({} :: self, UIController))
+
+function UIController.new(): UIController
+    local self = setmetatable({} :: self, UIController)
+
+    return self
+end
+
+function UIController:initialize()
+    local pages = {}
+    for _, page in script.Pages:GetChildren() do
+        local pageModule = require(page)
+        -- We will pass the PlayerGui to each page so we don't have re-define it in each page. 
+        -- This is called Dependency Injection (DI)
+        pages[page.Name] = pageModule.new(PlayerGui) 
+    end
+    self.pages = pages
+end
+
+function UIController:start()
+    -- Here we can safely assume all pages have been initialized.
+    self.pages.Shop:open() -- Open the shop page
+end
+
+return UIController
+```
+### Shop Page
+```lua
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Dispatcher = require(ReplicatedStorage.Packages.Dispatcher)
+
+local Shop = {}
+Shop.__index = Shop
+
+type self = {
+    new: () -> Shop,
+    initialize: () -> (),
+    open: () -> (),
+    close: () -> ()
+}
+
+export type Shop = typeof(setmetatable({} :: self, Shop))
+
+function Shop.new(): Shop
+    local self = setmetatable({} :: self, Shop)
+
+    return self
+end
+
+function Shop:initialize(PlayerGui)
+    self.Frame = PlayerGui:WaitForChild("ShopFrame")
+    self.CloseButton = self.Frame:WaitForChild("CloseButton")
+
+    self.Frame.Visible = false
+
+    -- Close the shop when the close button is clicked
+    self.CloseButton.MouseButton1Click:Connect(function()
+        self:close()
+    end)
+
+    -- Listen for events from other controllers
+    Dispatcher:Listen("OpenShop", function()
+        self:open()
+    end)
+
+    Dispatcher:Listen("CloseShop", function()
+        self:close()
+    end)
+end
+
+function Shop:open()
+    self.Frame.Visible = true
+end
+
+function Shop:close()
+    self.Frame.Visible = false
+end
+
+return Shop
+```
+
+---
+
+## 📡 Using ReplicaClient in a Controller
+
+Shard integrates [Replica](https://madstudioroblox.github.io/Replica/) to sync player data to the client in real-time.
+
+Replica is a powerful data synchronization library that allows you to manage and sync data between the server and client efficiently.
+
+Normally when you want to notify the client of a data change, you would use RemoteEvents or RemoteFunctions. However, with Replica, you can simply use the `ReplicaClient` to listen for changes.
+
+By default, Shard will create a `PlayerData` replica for each player. So whenever a change is made to a PlayerProfile, it will automatically sync to all clients.
+
+You can define your Replica functions anywhere in your controller, the controller bootstrapper will automatically call `RequestData()` after all controllers are initialized and started.
+
+---
+
+
+You can listen to data changes or access the current state like this:
+
+```lua
+local ReplicaClient = require(ReplicatedStorage.Libraries.Replica.ReplicaClient)
+
+Replica.OnNew("PlayerData", function(replica)
+    -- Since it replicates to all clients, we need to check if this is the local player
+    local isLocal = replica.Tags.Player == Players.LocalPlayer
+    if not isLocal then
+        return
+    end
+
+    print(`Replica received client-side! Data:`, replica.Data)
+    replica:OnSet({"Cash"}, function(new_value, old_value)
+        print(`Cash has changed from {old_value} to {new_value}`)
+    end)
+end)
+```
+
+> You can listen to nested changes as well: `{ "Stats", "Health" }`
+
+---
+
+Next: [Services →](services.mdx)
+
+

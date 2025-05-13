@@ -1,0 +1,228 @@
+---
+sidebar_label: "SimpleNet"
+sidebar_position: 6
+---
+
+# 📡 SimpleNet
+
+**SimpleNet** is Shard's built-in abstraction layer for Roblox's server-client architecture. It wraps `RemoteEvents`, `RemoteFunctions`, `BindableEvents`, and `BindableFunctions` to provide a unified, developer-friendly interface.
+
+SimpleNet automatically detects the runtime context (client or server), handles instance creation (on the server), and provides a consistent API for firing, filtering, and receiving events.
+
+---
+
+## 🧩 Supported Types
+
+| Type              | Purpose                          |
+|-------------------|----------------------------------|
+| `RemoteEvent`     | Server-to-client and client-to-server messaging |
+| `RemoteFunction`  | Remote client-server request-response |
+| `BindableEvent`   | Local event communication within the same environment |
+| `BindableFunction`| Local request-response communication |
+
+All SimpleNet instances are uniquely prefixed internally:
+
+- `"RE/"` → RemoteEvent
+- `"RF/"` → RemoteFunction
+- `"BE/"` → BindableEvent
+- `"BF/"` → BindableFunction
+
+--- 
+
+## 📡 Remote Events
+
+### ✉️ RemoteEvent Example
+```lua title="Server"
+local SimpleNet = require(ReplicatedStorage.Packages.SimpleNet)
+
+-- Create a RemoteEvent
+local MyEvent = SimpleNet:remoteEvent("PrintMessage")
+
+-- Listen for messages from the client
+MyEvent:Connect(function(player, message)
+    print(`{player.Name} says: {message}`)
+end)
+
+-- Alternatively, use the shorthand
+SimpleNet:remoteEvent("PrintMessage", function(player, message)
+    print(`{player.Name} says (shorthand): {message}`)
+end)
+
+-- Send a message to a filtered set of players
+MyEvent:FireFilter(function(player)
+    return player.Name == "Player1"
+end, "Hello Player1!")
+```
+
+```lua title="Client"
+local SimpleNet = require(ReplicatedStorage.Packages.SimpleNet)
+
+-- Get the RemoteEvent
+local MyEvent = SimpleNet:remoteEvent("PrintMessage")
+
+-- Send a message to the server
+MyEvent:FireServer("Hello from client")
+
+-- Listen for server messages
+MyEvent:Connect(function(message)
+    print(`Server says: {message}`)
+end)
+```
+:::info Output
+```bash
+Server:
+Player1 says: Hello Player1!
+Player1 says: Hello from client
+
+Client:
+Server says: Hello from client
+```
+:::
+---
+
+### 🚀 RemoteEvent API
+
+```lua title="Client"
+local event = SimpleNet:remoteEvent("EventName")
+
+event:Fire(...) -- Alias for FireServer(...)
+event:FireServer(...)
+
+event:FireDelayed(delayTime: number, ...: any) -- Delayed fire to server
+
+event:Connect(callback: (...: any) -> any)
+event:Destroy()
+
+```
+
+```lua title="Server"
+local myEvent = SimpleNet:remoteEvent("EventName")
+
+myEvent:Fire(player: Player, ...: any)
+myEvent:FireAll(...: any) -- Alias for FireAllClients(...)
+myEvent:FireAllClients(...: any)
+
+myEvent:FireFilter((player: Player) -> boolean, ...)
+myEvent:FireAllExcept(player: Player, ...)
+myEvent:FireAllExceptFilter((player: Player) -> boolean, ...)
+
+myEvent:FireDelayed(player: Player, delayTime: number, ...: any)
+myEvent:FireAllDelayed(delayTime: number, ...: any)
+
+myEvent:Connect(callback: (player: Player, ...any) -> any)
+myEvent:Destroy()
+```
+
+---
+
+## 🔁 RemoteFunctions
+
+### 🔄 RemoteFunction Example
+```lua title="Server"
+local SimpleNet = require(ReplicatedStorage.Packages.SimpleNet)
+
+local GetInventory = SimpleNet:remoteFunction("GetInventory")
+
+GetInventory:Connect(function(player)
+    return { "Sword", "Shield" }
+end)
+
+-- You can also use the shorthand
+SimpleNet:remoteFunction("GetInventory", function(player)
+    return { "Sword", "Shield" }
+end)
+
+```
+
+```lua title="Client"
+local SimpleNet = require(ReplicatedStorage.Packages.SimpleNet)
+local GetInventory = SimpleNet:remoteFunction("GetInventory")
+local inventory = GetInventory:InvokeServer() -- client → server
+print("Inventory:", inventory)
+```
+
+:::info Output
+```lua 
+Inventory: { "Sword", "Shield" }
+```
+:::
+
+### 🔄 RemoteFunction API
+
+:::warning
+
+There is no InvokeClient, as clients can cause issues by yielding forever or causing the server to error.
+
+:::
+
+```lua title="Client"
+local myFunction = SimpleNet:remoteFunction("FunctionName") 
+
+myFunction:Invoke(...) -- Alias for InvokeServer(...)
+myFunction:InvokeServer(...)
+myFunction:InvokeDelayed(delayTime: number, ...: any)
+myFunction:Destroy()
+```
+
+```lua title="Server"
+local myFunction = SimpleNet:remoteFunction("FunctionName")
+
+myFunction:Connect(callback: (...any) -> any)
+myFunction:OnServerInvoke(callback: (...any) -> any)
+myFunction:Destroy()
+```
+
+---
+
+## 🔄 BindableEvent / BindableFunction
+
+These are for local communication on the same side (e.g., between two controllers or two services).
+
+### 🔁 BindableEvent
+
+```lua
+local BE = SimpleNet:bindableEvent("OnNotification")
+
+BE:Connect(function(message)
+    print("Local message:", message)
+end)
+
+BE:Fire("Hello world!")
+```
+
+```lua title="API"
+local myBindable = SimpleNet:bindableEvent("MyBindable")
+
+myBindable:Fire(...)
+myBindable:FireDelayed(delayTime: number, ...: any)
+myBindable:Connect(callback: (...any) -> any)
+myBindable:Destroy()
+```
+
+### 🔧 BindableFunction
+
+```lua
+local BF = SimpleNet:bindableFunction("Calculate")
+
+BF:Connect(function(a, b)
+    return a + b
+end)
+
+local result = BF:Invoke(5, 10)
+print("Result:", result) -- 15
+```
+
+```lua title="API"
+local myBindableFunction = SimpleNet:bindableFunction("MyBindableFunction")
+
+myBindableFunction:Invoke(...: any)
+myBindableFunction:InvokeDelayed(delayTime: number, ...: any)
+myBindableFunction:OnInvoke(callback: (...any) -> any)
+myBindableFunction:Connect(callback: (...any) -> any)
+myBindableFunction:Destroy()
+```
+---
+
+
+Next: [Dispatcher →](dispatcher.mdx)
+

@@ -1,0 +1,217 @@
+---
+sidebar_label: "Services"
+sidebar_position: 4
+---
+
+# 🛠️ Services
+
+Services in Shard are server-side modules responsible for handling:
+
+- Data management
+- Game state and round management
+- NPCs, quests, and world systems
+- Purchases, economy, and backend tasks
+- Any shared state between players
+
+Just like controllers, Shard uses single file architecture ideology, meaning services are defined inside the `src/server/Services` folder/file.
+
+They are automatically loaded and bootstrapped on the server before the client initializes. This ensures all core systems are running and any Replica objects (like `PlayerData`) are ready to be replicated to players.
+
+---
+
+Each service module can implement the following lifecycle methods:
+
+| Method       | Purpose                                               |
+|--------------|--------------------------------------------------------|
+| `new()`      | Optional constructor (inject dependencies if needed)   |
+| `initialize()` | Called after construction, used to set up state, listeners, etc |
+| `start()`    | Called after all modules are initialized               |
+
+> Services are automatically added to `GetModule`. You should only call `GetModule("SomeService")` in the `start()` phase to avoid dependency ordering issues.
+
+<details>
+
+<summary>Service Bootstrapper Raw Code</summary>
+
+```lua
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local Packages = ReplicatedStorage:WaitForChild("Packages")
+
+local Framework = require(ReplicatedStorage.Configs.Framework)
+local GetModule = require(ReplicatedStorage.Packages.GetModule)
+local Data = require(script.Parent.Data)
+local Promise = require(Packages.Promise)
+local start = tick()
+
+GetModule.Debug = Framework.GET_MODULE_DEBUG
+
+local totalModules = #script:GetChildren()
+local loaded = 0
+local initalized = {}
+
+local function loadModule(module, Data)
+	if Framework.DEV_MODE and RunService:IsStudio() then
+		task.spawn(function()
+			local success, err = pcall(function()
+				local required = require(module)
+				
+				if required.new then
+					required = required.new({
+						 -- You can dependency inject here if needed
+					})
+				end
+
+				if required.initialize then
+					required:initialize()
+				end
+
+				initalized[module.Name] = required
+				GetModule:Add(required, module.Name)
+			end)
+
+			if not success then
+				warn(`🚫 {err}`)
+			end
+			loaded += 1
+		end)
+	else
+		local required = require(module).new({
+			-- You can dependency inject here if needed
+		})
+
+		if required.initialize then
+			required:initialize()
+		end
+
+		initalized[module.Name] = required
+		GetModule:Add(required, module.Name)
+	end
+end
+
+Promise.new(function(resolve, reject)
+	Data:initialize()
+
+	for _, module in script:GetChildren() do
+		loadModule(module, Data)
+	end
+
+	if Framework.DEV_MODE and RunService:IsStudio() then
+		while loaded < totalModules do
+			task.wait()
+		end
+	end
+	for name, module in initalized do
+		if module.start then
+			module:start()
+		end
+		print(`🚀 Loaded {name}`)
+	end
+
+	resolve()
+end)
+	:andThen(function()
+		print(`✅ Server Loaded Successfully in {tick() - start}s`)
+		workspace:SetAttribute("ServerLoaded", true)
+	end)
+	:catch(function(err)
+		warn(err)
+	end)
+```
+
+</details>
+
+
+---
+
+## 🧪 Basic Service Example
+
+```lua
+local MyService = {}
+MyService.__index = MyService
+
+function MyService.new()
+    local self = setmetatable({}, MyService)
+    return self
+end
+
+function MyService:initialize()
+    print("Initialized MyService")
+end
+
+function MyService:start()
+    -- Call GetModule here and after to avoid dependency ordering issues
+    print("Started MyService")
+end
+
+return MyService
+````
+
+> You can also write services in a stateless singleton format if needed, just like controllers.
+
+---
+
+## 🔬 Advanced Service Example
+
+In this example, we will utilize the Data module and `PlayerProfile` to create a simple cash service that manages player cash.
+
+```lua
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ServerScriptService = game:GetService("ServerScriptService")
+
+-- `observePlayer` is a core reactive utility bundled with Shard.
+local observePlayer = require(ReplicatedStorage.Packages.Observers.observePlayer)
+local Data = require(ServerScriptService.Data)
+
+local CashService = {}
+CashService.__index = CashService
+
+type self = {
+    new: () -> CashService,
+    initialize: () -> (),
+    start: () -> ()
+}
+
+export type CashService = typeof(setmetatable({} :: self, CashService))
+
+function CashService.new(): CashService
+    local self = setmetatable({} :: self, CashService)
+
+    return self
+end
+
+function CashService:initialize()
+    -- Observe player lifecycle events
+    observePlayer(function(player)
+        local playerProfile = Data:GetProfileAsync(player)
+        if not playerProfile then return end -- Make sure to check if the player profile is valid
+
+        -- Income per second loop
+        local incomePerSecondThread = task.spawn(function()
+            while playerProfile do
+                task.wait(1)
+                playerProfile:Set("Cash", playerProfile:Get("Cash") + 1)
+
+                print("Cash: ", playerProfile:Get("Cash"))
+            end
+        end)
+
+        -- Cleanup on player removal
+        return function()
+            if incomePerSecondThread then
+                task.cancel(incomePerSecondThread)
+            end
+        end
+    end)
+end
+
+function CashService:start()
+    -- Reserved for post-initialization logic
+end
+
+return CashService
+```
+
+---
+
+Next: [Data and PlayerProfile →](data.mdx)
