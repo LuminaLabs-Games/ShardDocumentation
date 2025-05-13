@@ -6,6 +6,8 @@
 
 import { themes as prismThemes } from "prism-react-renderer";
 
+const darkCodeTheme = prismThemes.dracula;
+
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
 /** @type {import('@docusaurus/types').Config} */
@@ -150,7 +152,8 @@ const config = {
       },
       prism: {
         theme: prismThemes.github,
-        darkTheme: prismThemes.dracula,
+        darkTheme: darkCodeTheme,
+        additionalLanguages: ["lua"],
       },
     }),
 };
