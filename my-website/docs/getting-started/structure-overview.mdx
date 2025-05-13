@@ -1,0 +1,151 @@
+---
+sidebar_label: "Structure Overview"
+sidebar_position: 2
+---
+
+# Structure Overview
+
+This page serves as a high-level summary of how the Shard framework is structured. If you're new to Shard, this is a great place to get familiar with its core components and how they fit together.
+
+---
+
+## 📂 Folder Structure
+
+### 🧩 [Controllers](../shard-api/controllers.mdx)
+
+Controllers are **client-side modules** responsible for UI, input handling, camera logic, and more.
+
+- Auto-loaded from the `src/client/Controllers` file/folder.
+- Can optionally define lifecycle methods:
+  - `initialize()`: Prepare state, set up connections.
+  - `start()`: Begin logic after all modules are initialized.
+- Registered in `GetModule` automatically.
+
+> Example use: Front end setup, UI transitions, camera effects, hotkey input listeners.
+
+---
+
+### 🛠️ [Services](../shard-api/services.mdx)
+
+Services are **server-side modules** that manage backend logic such as data, game rounds, NPCs, and more.
+
+- Auto-loaded from the `src/server/Services` file/folder.
+- Same lifecycle methods: `initialize()` and `start()`.
+- Can call and communicate with other services via `GetModule` or `Dispatcher`.
+
+> Example use: Plot manager, Matchmaking, inventory management, round control.
+
+---
+
+### 🧠 [Data (Player Data System)](../shard-api/data.mdx)
+
+Shard comes bundled with a full player data system powered by:
+
+- [ProfileStore](https://madstudioroblox.github.io/ProfileStore/): Handles persistent player sessions
+- [Replica](https://madstudioroblox.github.io/Replica/): Replicates player data live to clients
+
+Each player's data is wrapped in a `PlayerProfile` object, offering:
+
+- `:Get()`, `:Set()`, `:Increment()`, `:Decrement()`
+- Easy Message handlers set up for global gifting or commands
+
+```lua
+local profile = Data:GetProfileAsync(player)
+if not profile then return end
+
+profile:Increment("Coins", 25)
+```
+
+---
+## 📦 Core Modules
+
+### 📡 [SimpleNet](../shard-api/simplenet.mdx)
+
+SimpleNet is Shard's custom networking layer.
+
+It wraps and simplifies:
+
+* RemoteEvents
+* RemoteFunctions
+* BindableEvents
+* BindableFunctions
+
+Provides utility methods like:
+
+* `:FireAll()`
+* `:FireAllExcept(player)`
+* `:FireFilter((player) -> boolean)`
+* `:FireDelayed(player, delayTime, ...)`
+
+> Example:
+
+```lua
+local MyEvent = SimpleNet:remoteEvent("OpenShop")
+
+MyEvent:Connect(function(player)
+    print(player.Name .. " opened the shop")
+end)
+```
+or
+
+```lua
+SimpleNet:remoteEvent("OpenShop", function(player)
+	print(player.Name .. " opened the shop")
+end)
+```
+
+---
+
+### 📬 [Dispatcher](../shard-api/dispatcher.mdx)
+
+Dispatcher is Shard's internal pub/sub event system.
+
+* Works both globally and per-instance
+* Supports:
+
+  * `Subscribe()`
+  * `SubscribeOnce()`
+  * `Publish()`
+  * `PublishDeferred()`
+  * `Unsubscribe()`
+  * Includes alias's and other methods
+
+Useful for:
+
+* Controller-to-controller or service-to-service messaging
+* Decoupled event handling
+
+```lua
+Dispatcher:Subscribe("PrintMessage", function(messageToPrint)
+    print("Message:", messageToPrint)
+end)
+```
+From another module:
+```lua
+Dispatcher:Publish("PrintMessage", "Hello, world!")
+-- Output: Message: Hello, world!
+```
+
+
+---
+
+### 🔎 [GetModule](../shard-api/GetModule.mdx)
+
+GetModule acts as a **central registry** of loaded modules.
+
+* You can fetch any initialized controller/service/module by name.
+* If the module isn't found internally, it will fall back to searching `ReplicatedStorage` or `ServerStorage`.
+* This is useful if you decide to use OOP services or controllers, as it will grab the constructed object. However, this can also work for non-OOP modules.
+
+> Example:
+
+```lua
+local RoundService = GetModule("RoundService")
+RoundService:StartRound()
+```
+
+---
+
+This overview covers the main tools Shard offers. Dive into the next sections for a more in-depth look at each component and how to use them.
+
+Next: [Look into class snippets to make life easier, then dive into the Core API →](../getting-started/class-snippet.mdx)

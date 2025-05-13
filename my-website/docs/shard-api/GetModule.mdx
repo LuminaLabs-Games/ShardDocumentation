@@ -1,0 +1,97 @@
+---
+sidebar_label: "GetModule"
+sidebar_position: 8
+---
+
+# 🧰 GetModule
+
+**GetModule** is Shard's centralized module registry. It allows you to access any initialized service, controller, or utility module from anywhere in your game after it's been registered by the framework bootstrapper.
+
+It supports:
+- Retrieving Shard-managed modules (e.g. controllers/services)
+- Fallback resolution from `ReplicatedStorage` or `ServerStorage` if not found
+- Optional debug logging for fallback visibility
+
+---
+
+## 📦 When Should You Use GetModule?
+
+- To access a service from another service (`RoundService → DataService`)
+- To access a controller from another controller (`UIController → PromptController`)
+- To share utility modules between environments (e.g. a type module or config table)
+- When doing manual dependency resolution across folders
+
+---
+
+## 🧪 Basic Usage
+
+```lua
+local GetModule = require(ReplicatedStorage.Packages.GetModule)
+
+local SpawnService = GetModule("SpawnService")
+local RoundService = GetModule("RoundService")
+
+SpawnService:SpawnPlayerAtRandomSpawn(player)
+task.wait(5)
+RoundService:StartNextRound()
+
+````
+
+---
+
+## 🧬 How It Works
+
+During startup, every module that is loaded through the bootstrapper is added to the registry:
+
+```lua
+GetModule:Add(required, moduleName)
+```
+
+Once registered, you can retrieve it with:
+
+```lua
+local MyService = GetModule("MyService")
+```
+
+If the module isn't found in the registry, GetModule will search:
+
+1. `ReplicatedStorage`
+2. `ServerStorage` (on the server)
+3. `StarterPlayerScripts` (on the client)
+
+> If a fallback is found and required successfully, it will also be cached for future use.
+
+---
+
+## 🧠 Tips & Best Practices
+
+* Always call `GetModule()` inside `start()` methods, never inside `initialize()`, to ensure all dependencies are already registered.
+* Avoid circular dependencies. If `ServiceA` uses `ServiceB` and vice versa, extract shared logic into a third module.
+* Use `GetModule.Debug = true` to enable warnings when fallback modules are required.
+
+---
+
+## 🔍 Example: Optional Fallback
+
+```lua
+-- SharedTypes may not exist, but if it does, this will find it
+local SharedTypes = GetModule("SharedTypes")
+if SharedTypes then
+	print(SharedTypes.ItemType)
+end
+```
+
+--- 
+
+## 📦 API
+
+| Method         | Description                                                                 |
+|----------------|-----------------------------------------------------------------------------|
+| `GetModule(name)` | Retrieve a module by name. If not found, it will search ReplicatedStorage and ServerStorage. |
+| `GetModule:Add(module, name)` | Register a module in the GetModule registry. This is done automatically during the bootstrap process. |
+| `GetModule:Remove(name)` | Remove a module from the registry. This is not commonly used. |
+| `GetModule.Debug` | Enable debug logging for fallback resolution. Useful for development. By default, this is tied directly to `ReplicatedStorage.Configs.Framework`, `GET_MODULE_DEBUG` |
+| `GetModule:Resolve(name)` | Resolve a module by name, returning the module or nil if not found. If found it is cached. This is an internal method. |
+
+
+---

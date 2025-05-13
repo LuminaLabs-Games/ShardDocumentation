@@ -14,7 +14,7 @@ const darkCodeTheme = prismThemes.dracula;
 const config = {
   title: "Shard Docs",
   tagline: "by LuminaLabs Games",
-  favicon: "img/favicon.ico",
+  favicon: "img/FavIcon.png",
 
   // Set the production url of your site here
   url: "https://your-docusaurus-site.example.com",
@@ -48,7 +48,7 @@ const config = {
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl:
-            "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/",
+            "https://github.com/LuminaLabs-Games/ShardDocumentation",
         },
         blog: {
           showReadingTime: true,
@@ -59,7 +59,7 @@ const config = {
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl:
-            "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/",
+            "https://github.com/LuminaLabs-Games/ShardDocumentation",
           // Useful options to enforce blogging best practices
           onInlineTags: "warn",
           onInlineAuthors: "warn",
@@ -115,40 +115,44 @@ const config = {
                 label: "Getting Started",
                 to: "/docs/getting-started/",
               },
+              {
+                label: "Structure Overview",
+                to: "/docs/structure-overview/",
+              }
             ],
           },
           {
             title: "Community",
             items: [
               {
-                label: "Stack Overflow",
-                href: "https://stackoverflow.com/questions/tagged/docusaurus",
+                label: "Roblox Group",
+                href: "https://www.roblox.com/communities/34588487/LuminaLabs-Games#!/about",
               },
               {
                 label: "Discord",
-                href: "https://discordapp.com/invite/docusaurus",
+                href: "https://discord.gg/nEbTF8ynH6",
               },
               {
                 label: "X",
-                href: "https://x.com/docusaurus",
+                href: "https://x.com/LuminaLabsRBLX",
               },
             ],
           },
           {
             title: "More",
             items: [
-              {
-                label: "Blog",
-                to: "/blog",
-              },
+              // {
+              //   label: "Blog",
+              //   to: "/blog",
+              // },
               {
                 label: "GitHub",
-                href: "https://github.com/facebook/docusaurus",
+                href: "https://github.com/LuminaLabs-Games/Shard",
               },
             ],
           },
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} My Project, Inc. Built with Docusaurus.`,
+        copyright: `Copyright © ${new Date().getFullYear()} LuminaLabs Games, LLC. Built with Docusaurus.`,
       },
       prism: {
         theme: prismThemes.github,

@@ -8,8 +8,7 @@ const FeatureList = [
     Svg: require('@site/static/img/undraw_docusaurus_mountain.svg').default,
     description: (
       <>
-        Docusaurus was designed from the ground up to be easily installed and
-        used to get your website up and running quickly.
+        Shard was designed from many development iterations to be an efficient, lightweight framework for scripting Roblox games with ease of use in mind
       </>
     ),
   },
@@ -18,18 +17,16 @@ const FeatureList = [
     Svg: require('@site/static/img/undraw_docusaurus_tree.svg').default,
     description: (
       <>
-        Docusaurus lets you focus on your docs, and we&apos;ll do the chores. Go
-        ahead and move your docs into the <code>docs</code> directory.
+        Shard allows you to focus on the main aspects of your game, such as gameplay and design, rather than worrying about the underlying framework.
       </>
     ),
   },
   {
-    title: 'Powered by React',
-    Svg: require('@site/static/img/undraw_docusaurus_react.svg').default,
+    title: 'Powered by Developers',
+    Svg: require('@site/static/img/scripting-icon.svg').default,
     description: (
       <>
-        Extend or customize your website layout by reusing React. Docusaurus can
-        be extended while reusing the same header and footer.
+        Shard is not afraid to utilize well known open source libraries, and packages, with the ability to dynamically load modules, you can easily add or remove features as needed.
       </>
     ),
   },

@@ -5,7 +5,7 @@ sidebar_position: 1
 
 # Introduction
 
-**Shard** is a customizable, single-file, controller-service oriented, and object-oriented framework built for Roblox developers. It comes with [ProfileStore](https://madstudioroblox.github.io/ProfileStore/) and [Replica](https://madstudioroblox.github.io/Replica/) integrated by default, enabling seamless data persistence and real-time replication.
+**Shard** is a customizable, single-file, controller-service oriented, and object-oriented framework that supports functional programming. It comes with [ProfileStore](https://madstudioroblox.github.io/ProfileStore/) and [Replica](https://madstudioroblox.github.io/Replica/) integrated by default, enabling seamless data persistence and real-time replication.
 
 Using the Shard plugin, you can spin up a fully functional server-client architecture in seconds, with built-in data and replication systems that scale easily.
 
@@ -22,12 +22,7 @@ Shard is built with simplicity and flexibility in mind, it reduces boilerplate a
   - Global update support (e.g. for gifting systems)  
   - Safe Developer Product processing via [ProfileStore's best practices](https://madstudioroblox.github.io/ProfileStore/devproducts/)  
   - Player data managed through a custom `PlayerProfile` class
-    ```lua
-    local PlayerProfile = Data:GetProfileAsync(player)
-    if PlayerProfile then
-        PlayerProfile:GiveCash(100)
-    end
-    ```
+
 
 - **SimpleNet**  
   - Easy-to-use abstraction over `RemoteEvent`, `RemoteFunction`, `BindableEvent`, and `BindableFunction`

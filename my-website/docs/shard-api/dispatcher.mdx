@@ -1,0 +1,171 @@
+---
+sidebar_label: "Dispatcher"
+sidebar_position: 7
+---
+
+# 📢 Dispatcher
+
+**Dispatcher** is Shard's built-in lightweight publish/subscribe system used for decoupled communication between services, controllers, or modules. It helps reduce tight coupling and boilerplate RemoteEvent usage when events are scoped to the same environment (client ↔ client or server ↔ server).
+
+It supports both singleton-based and instance-based event routing.
+
+---
+
+## 🧩 Common Use Cases
+
+- Controller-to-controller UI communication (e.g. `OpenUI`, `CloseUI`)
+- Service-to-service event handling (e.g. `PlayerJoined`, `PlayerLeft`)
+- Service-to-service coordination without circular dependencies
+- Broadcasting events to multiple subscribers
+- Scoped or dynamic dispatching via local `Dispatcher.new()`
+
+---
+
+## 🧪 Basic Usage
+
+```lua
+local Dispatcher = require(ReplicatedStorage.Packages.Dispatcher)
+
+-- Subscribe to an event
+Dispatcher:Subscribe("OpenShop", function()
+    print("Shop was opened!")
+end)
+
+-- Fire the event
+Dispatcher:Publish("OpenShop")
+````
+
+---
+
+## 🧠 API Reference
+
+| Method                                           | Description                                                               |
+| ------------------------------------------------ | ------------------------------------------------------------------------- |
+| `Subscribe(event, callback, callbackName?)`      | Connect to an event. Optional `callbackName` allows named unsubscription. |
+| `Listen(...)` / `listen(...)` / `subscribe(...)` | Aliases for `Subscribe`                                                   |
+| `SubscribeOnce(event, callback, callbackName?)`  | One-time event subscription                                               |
+| `Unsubscribe(event, callbackName?)`              | Remove a specific named callback, or all for that event                   |
+| `Publish(event, ...)`                            | Fire all callbacks for an event and yield on results                      |
+| `PublishDeferred(event, ...)`                    | Same as `Publish`, but deferred to the next frame                         |
+| `PublishNoYield(event, ...)`                     | Fires all callbacks in parallel with `task.spawn`                         |
+
+---
+
+## 🧪 Named Callback Example
+
+```lua
+Dispatcher:Subscribe("Shop", function(toggle)
+    print("Shop was toggled:", toggle)
+end, "ShopToggle")
+
+Dispatcher:Subscribe("Shop", function()
+    print("Apply the discount!")
+end, "ShopDiscount")
+
+-- Later when the discount should no longer be applied:
+Dispatcher:Unsubscribe("Shop", "ShopDiscount")
+```
+> Named callbacks are useful when you want to manage multiple listeners separately to a single event, unsubscribe one without affecting the rest.
+
+---
+
+## 🔄 One-Time Listener
+
+```lua
+Dispatcher:SubscribeOnce("PlayCutscene", function()
+    print("This only runs once!")
+end)
+```
+
+---
+
+## 🚦 Instance-Based Dispatcher
+
+You can create your own scoped Dispatcher instances for isolated systems:
+
+```lua
+local Dispatcher = require(ReplicatedStorage.Packages.Dispatcher)
+
+local myDispatcher = Dispatcher.new()
+
+myDispatcher:Subscribe("Ping", function(msg)
+    print("Ping received:", msg)
+end)
+
+myDispatcher:Publish("Ping", "Hello World")
+```
+
+> Internally, Dispatcher uses a `DispatcherSingleton` for global events. When using `.new()`, you get a fresh isolated `_events` table.
+
+---
+
+Absolutely — here’s a focused documentation section specifically for **`Dispatcher:Publish()` with multiple return values**, ready to be added under your Dispatcher page:
+
+---
+
+## 🔁 Returning Multiple Values
+
+The `Dispatcher:Publish()` method supports returning values from **all subscribers**, including multiple values per callback. This allows you to gather results from multiple systems in a clean and consistent way.
+
+---
+
+### 🧪 Example: System Readiness Check
+
+```lua
+Dispatcher:Subscribe("CheckSystemsReady", function()
+    return "✅ Inventory Ready"
+end, "InventorySystem")
+
+Dispatcher:Subscribe("CheckSystemsReady", function()
+    return "✅ Matchmaking Ready"
+end, "MatchmakingSystem")
+
+Dispatcher:Subscribe("CheckSystemsReady", function()
+    return "✅ DataStore Ready"
+end, "DataSystem")
+
+local ready1, ready2, ready3 = Dispatcher:Publish("CheckSystemsReady")
+
+print("System Statuses:")
+print(ready1) --> ✅ Inventory Ready
+print(ready2) --> ✅ Matchmaking Ready
+print(ready3) --> ✅ DataStore Ready
+```
+
+---
+
+### 📦 Example: Returning Tuples
+
+You can also return multiple values per subscriber. These values will be flattened into a single return list:
+
+```lua
+Dispatcher:Subscribe("GetStats", function()
+    return 5, "Bronze"
+end)
+
+Dispatcher:Subscribe("GetStats", function()
+    return 12, "Gold"
+end)
+
+local score1, rank1, score2, rank2 = Dispatcher:Publish("GetStats")
+
+print(score1, rank1) --> 5 Bronze
+print(score2, rank2) --> 12 Gold
+```
+
+---
+
+:::warning Warning - Best Practices
+
+* Avoid returning mixed or unpredictable shapes, if structure matters, wrap values in tables:
+  ```lua
+  return { score = 5, rank = "Bronze" }
+  ```
+* Consider limiting return expectations to **diagnostics, hooks, or aggregates**, not for business-critical logic.
+
+:::
+
+---
+
+Next: [GetModule →](GetModule.mdx)
+
