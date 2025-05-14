@@ -607,7 +607,7 @@ In the `observePlayer` teardown function of the Data Service, you'll notice this
 RunService.Heartbeat:Wait()
 ```
 
-This isn't just a random wait. It's a subtle quirk that **fixes a common issue with [`Profile.OnLastSave`](https://madstudioroblox.github.io/ProfileStore/api/#onlastsave)**, where the *shutdown reason* is incorrectly labeled as `"Manual"` instead of `"RobloxShutdown"` during proper game shutdown sequences.
+This isn't just a random wait. It's a subtle quirk that **fixes a common issue with [`Profile.OnLastSave`](https://madstudioroblox.github.io/ProfileStore/api/#onlastsave)**, where the *shutdown reason* is incorrectly labeled as `"Manual"` instead of `"Shutdown"` during proper game shutdown sequences.
 
 ```lua
 Profile.OnLastSave:Connect(function(reason: "Manual" | "External" | "Shutdown")
