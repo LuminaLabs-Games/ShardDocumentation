@@ -33,7 +33,7 @@ export default function Home() {
   return (
     <Layout
       title={`${siteConfig.title}`}
-      description="Description will go into a meta tag in <head />">
+      description="Shard is a framework for efficient game development in Roblox.">
       <HomepageHeader />
       <main>
         <HomepageFeatures />
