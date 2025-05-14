@@ -17,10 +17,10 @@ const config = {
   favicon: "img/FavIcon.png",
 
   // Set the production url of your site here
-  url: "https://luminalabs-games.github.io",
+  url: "https://shard.luminalabs.games",
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
-  baseUrl: "/ShardDocumentation/",
+  baseUrl: "/shard/",
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
