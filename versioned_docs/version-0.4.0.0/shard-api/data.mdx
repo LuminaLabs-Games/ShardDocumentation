@@ -626,7 +626,7 @@ By waiting one frame (`RunService.Heartbeat:Wait()`), we ensure:
 * ProfileStore detects the correct context and logs the shutdown as a proper **Roblox server shutdown**.
 * This can be especially important if you handle things like **offline boost refunds**, **last-minute saves**, or **developer-initiated shutdowns**.
 
-> Without this wait, `profile.OnLastSave(reason)` may return `"Manual"` or `"NotRoblox"` even when shutting down properly.
+> Without this wait, `profile.OnLastSave(reason)` may pass incorrect reasons when shutting down properly.
 
 ---
 
